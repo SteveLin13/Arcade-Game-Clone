@@ -18,7 +18,9 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        lastTime;
+        lastTime,
+        gamePause = false;
+
 
     canvas.width = 505;
     canvas.height = 606;
@@ -33,19 +35,23 @@ var Engine = (function(global) {
         var now = Date.now(),
             dt = (now - lastTime) / 1000.0;
 
-        /* 调用我们的 update / render 函数， 传递事件间隙给 update 函数因为这样
-         * 可以使动画更加顺畅。
-         */
-        update(dt);
-        render();
+        /*如果游戏暂停，更新、渲染函数停止调用*/
+        if (!Engine.gamePause){
+            /* 调用我们的 update / render 函数， 传递事件间隙给 update 函数因为这样
+             * 可以使动画更加顺畅。
+             */
+            update(dt);
+            render();
+        }
+            /* 设置我们的 lastTime 变量，它会被用来决定 main 函数下次被调用的事件。 */
+            lastTime = now;
 
-        /* 设置我们的 lastTime 变量，它会被用来决定 main 函数下次被调用的事件。 */
-        lastTime = now;
+            /* 在浏览准备好调用重绘下一个帧的时候，用浏览器的 requestAnimationFrame 函数
+             * 来调用这个函数
+             */
+            win.requestAnimationFrame(main);
 
-        /* 在浏览准备好调用重绘下一个帧的时候，用浏览器的 requestAnimationFrame 函数
-         * 来调用这个函数
-         */
-        win.requestAnimationFrame(main);
+
     }
 
     /* 这个函数调用一些初始化工作，特别是设置游戏必须的 lastTime 变量，这些工作只用
@@ -75,9 +81,11 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-        player.success();
     }
 
+    /* 这个函数会遍历在 app.js 定义的存放所有敌人实例的数组，并且调用他们的 checkCollision()
+     * 函数
+     */
     function checkCollisions(player) {
         allEnemies.forEach(function(enemy) {
             enemy.checkCollision(player);
@@ -129,12 +137,11 @@ var Engine = (function(global) {
         player.render();
     }
 
-    /* 这个函数现在没干任何事，但是这会是一个好地方让你来处理游戏重置的逻辑。可能是一个
-     * 从新开始游戏的按钮，也可以是一个游戏结束的画面，或者其它类似的设计。它只会被 init()
-     * 函数调用一次。
+    /* 重置函数，游戏引擎恢复运转，玩家返回初始位置
      */
     function reset() {
-        // 空操作
+        Engine.gamePause = false;
+        player.setOff();
     }
 
     /* 紧接着我们来加载我们知道的需要来绘制我们游戏关卡的图片。然后把 init 方法设置为回调函数。
@@ -153,4 +160,10 @@ var Engine = (function(global) {
      * 对象。从而开发者就可以在他们的app.js文件里面更容易的使用它。
      */
     global.ctx = ctx;
+
+/* 返回reset()，gamePause变量，可在app.js使用 */
+    return {
+        reset: reset,
+        gamePause: gamePause
+    }
 })(this);

@@ -28,10 +28,10 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
+// 此为游戏必须的函数，用来检测玩家与敌人的碰撞
 Enemy.prototype.checkCollision = function (player) {
     if (Math.abs(this.x - player.x) < 65 && Math.abs(this.y - player.y) < 45) {
-        player.x = 202;
-        player.y = 375;
+        player.setOff();
     }
 };
 
@@ -39,14 +39,35 @@ Enemy.prototype.checkCollision = function (player) {
 // 这个类需要一个 update() 函数， render() 函数和一个 handleInput()函数
 const Player = function() {
     this.sprite = 'images/char-boy.png';
+    };
+
+// 此为游戏必须的函数，用来初始化玩家位置
+Player.prototype.setOff = function() {
     this.x = 202;
     this.y = 375;
 };
 
+// 此为游戏必须的函数，用来在屏幕上画出玩家
 Player.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
+//// 此为游戏必须的函数，用来判定及处理玩家胜利这一情形
+Player.prototype.success = function() {
+    if (this.y < 0) {
+        //游戏引擎暂停运作，游戏暂停
+        Engine.gamePause = true;
+        //屏幕上出现胜利提示
+        ctx.font = "70px Georgia, serif";
+        ctx.fillText('Success',140,303)
+        //延时后游戏重置
+        setTimeout(function() {
+            Engine.reset();
+        },1500)
+    }
+};
+
+// 此为游戏必须的函数，用来处理键盘上的输入，更新玩家位置数据，实现移动
 Player.prototype.handleInput = function(keyCode) {
     switch (keyCode) {
         case 'left':
@@ -69,15 +90,9 @@ Player.prototype.handleInput = function(keyCode) {
                 this.y += 80;
             }
     }
+    player.success();
 };
 
-//玩家抵达河岸后，游戏胜利，回到初始位置
-Player.prototype.success = function() {
-    if (this.y < 0 ) {
-        this.x = 202;
-        this.y = 375;
-    }
-};
 // 现在实例化你的所有对象
 // 把所有敌人的对象都放进一个叫 allEnemies 的数组里面
 // 把玩家对象放进一个叫 player 的变量里面
